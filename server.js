@@ -1,5 +1,7 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
+require('console.table');
+
 
 const db = mysql.createConnection(
     {
@@ -10,9 +12,6 @@ const db = mysql.createConnection(
     },
     console.log('Connected to the database')
 );
-
-
-
 
 const actionQuestion = [
     {
@@ -28,39 +27,57 @@ const actionQuestion = [
             'Add Role', // incomplete
             'View All Departments', // incomplete
             'Add Department', // incomplete
-            'Quit' // incomplete
+            'Quit' // complete
         ]
     }
 ];
-
 
 function nextAction() {
     inquirer.prompt(actionQuestion).then((response) => {
         switch (response.action) {
             case 'View All Employees':
+                viewEmployees();
                 break;
             case 'Add Employee':
+                addEmployee();
                 break;
             case 'Update Employee Role':
+                updateRole();
                 break;
             case 'View All Roles':
                 viewRoles();
                 break;
             case 'Add Role':
+                addRole();
                 break;
             case 'View All Departments':
+                viewDepartments();
                 break;
             case 'Add Department':
+                addDepartment();
                 break;
             case 'Quit':
                 process.exit();
         }
-        nextAction();
     });
 };
 
-function viewEmployees () {
+function viewEmployees() {
+    const query = 
+    'SELECT e.id, e.first_name, e.last_name, role.title, '+
+    'department.name AS department, role.salary, '+
+    'CONCAT(m.first_name, " ", m.last_name) AS manager '+
+    'FROM employee e '+
+    'INNER JOIN role ON e.role_id = role.id '+
+    'INNER JOIN department ON role.department_id = department.id '+
+    'LEFT JOIN employee m ON e.manager_id = m.id '+
+    'ORDER BY e.id';
 
+    db.query(query, function(err, results) {
+        console.log(); // this is just to create a blank space to separate the table
+        console.table(results);
+        nextAction();
+    });
 };
 
 function addEmployee() {
@@ -72,13 +89,20 @@ function updateRole() {
 };
 
 function viewRoles() {
-    db.query('SELECT * FROM role', function(err, results) {
-        console.table(results);
-    });
+
 };
 
 function addRole() {
 
 };
 
+function viewDepartments() {
+
+};
+
+function addDepartment() {
+
+};
+
 nextAction();
+// viewEmployees();

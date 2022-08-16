@@ -89,7 +89,15 @@ function updateRole() {
 };
 
 function viewRoles() {
-
+    const query =
+    'SELECT role.id, title, department.name AS department, salary FROM role '+
+    'INNER JOIN department ON department.id = role.department_id '+
+    'ORDER BY role.id';
+    db.query(query, function(err, results) {
+        console.log();
+        console.table(results);
+        nextAction();
+    });
 };
 
 function addRole() {

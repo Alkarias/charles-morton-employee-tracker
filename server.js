@@ -128,8 +128,35 @@ async function addEmployee() {
     });
 };
 
-function updateRole() {
-
+async function updateRole() {
+    const employees = await db.promise().query('SELECT CONCAT(first_name, " ", last_name) name FROM employee');
+    const roles = await db.promise().query('SELECT title FROM role');
+    const options = roles[0].map(role => role.title);
+    const updateQuestions = [
+        {
+            type: 'list',
+            message: "Which employee's role do you want to update?",
+            name: 'name',
+            choices: employees[0]
+        },
+        {
+            type: 'list',
+            message: 'Which role do you want to assign the selected employee?',
+            name: 'role',
+            choices: options
+        }
+    ];
+    const response = await inquirer.prompt(updateQuestions);
+    // convert the name of the employee into their ID number
+    const name = response.name.split(' ');
+    const employeeId = await db.promise().query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', name);
+    // convert the name of the role into it's ID number
+    const roleId = await db.promise().query('SELECT id FROM role WHERE title = ?', response.role);
+    const values = [roleId[0][0].id, employeeId[0][0].id];
+    db.query('UPDATE employee SET role_id = ? WHERE id = ?', values, err => {
+        err ? console.error(err) : console.log(`Updated ${response.name} to have the role ${response.role}`);
+        nextAction();
+    })
 };
 
 function viewRoles() {

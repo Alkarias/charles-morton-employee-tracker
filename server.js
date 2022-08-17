@@ -24,9 +24,9 @@ const actionQuestion = [
             'Add Employee', // complete
             'Update Employee Role', // incomplete
             'View All Roles', // complete
-            'Add Role', // incomplete
+            'Add Role', // complete
             'View All Departments', // complete
-            'Add Department', // incomplete
+            'Add Department', // complete
             'Quit' // complete
         ]
     }
@@ -120,12 +120,12 @@ async function addEmployee() {
     const managerId = await db.promise().query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', name);
     // insert the new employee into the database
     const values = [response.first, response.last, roleId[0][0].id, managerId[0][0].id];
-    console.log(values);
     const insert = 
     'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)';
-    db.query(insert, values);
-    // prompt the user for the next set of inputs
-    nextAction();
+    db.query(insert, values, (err) => {
+        err ? console.error(err) : console.log(`Added new employee ${response.first} ${response.last}`);
+        nextAction();
+    });
 };
 
 function updateRole() {
@@ -144,11 +144,38 @@ function viewRoles() {
     });
 };
 
-function addRole() {
-
-};
-
-async function getRoles() {
+async function addRole() {
+    const departmentName = await db.promise().query('SELECT name FROM department');
+    const roleQuestions = [
+        {
+            type: 'input',
+            message: 'What is the name of the role?',
+            name: 'title'
+        },
+        {
+            type: 'input',
+            message: 'What is the salary of the role?',
+            name: 'salary'
+        },
+        {
+            type: 'list',
+            message: 'Which department does the role belong to?',
+            name: 'department',
+            choices: departmentName[0]
+        }
+    ];
+    const response = await inquirer.prompt(roleQuestions);
+    // convert the department name into it's ID
+    const departmentId = await db.promise()
+    .query('SELECT id FROM department WHERE name = ?', response.department);
+    // insert the new role into the database
+    const values = [response.title, response.salary, departmentId[0][0].id];
+    const insert = 
+    'INSERT INTO role (title, salary, department_id) VALUES (?,?,?)';
+    db.query(insert, values, err => {
+        err ? console.error(err) : console.log(`Added ${response.title} to roles`);
+        nextAction();
+    });
 };
 
 function viewDepartments() {
@@ -159,8 +186,22 @@ function viewDepartments() {
     });
 };
 
-function addDepartment() {
-
+async function addDepartment() {
+    // ask for the name of the new department
+    const departmentQuestions = [
+        {
+            type: 'input',
+            message: 'What is the name of the department?',
+            name: 'name'
+        }
+    ];
+    const department = await inquirer.prompt(departmentQuestions);
+    // insert the new department into the table
+    const name = department.name;
+    db.query('INSERT INTO department (name) VALUES (?)', name, (err) => {
+        err ? console.error(err) : console.log(`Added ${name} to departments`);
+        nextAction();
+    })
 };
 
 nextAction();

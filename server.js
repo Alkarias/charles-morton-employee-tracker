@@ -22,7 +22,7 @@ const actionQuestion = [
         choices: [
             'View All Employees', // complete
             'Add Employee', // complete
-            'Update Employee Role', // incomplete
+            'Update Employee Role', // complete
             'View All Roles', // complete
             'Add Role', // complete
             'View All Departments', // complete

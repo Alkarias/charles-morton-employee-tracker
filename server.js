@@ -20,46 +20,45 @@ const actionQuestion = [
         name: 'action',
         loop: true,
         choices: [
-            'View All Employees', // incomplete
-            'Add Employee', // incomplete
+            'View All Employees', // complete
+            'Add Employee', // complete
             'Update Employee Role', // incomplete
-            'View All Roles', // inccomplete
+            'View All Roles', // complete
             'Add Role', // incomplete
-            'View All Departments', // incomplete
+            'View All Departments', // complete
             'Add Department', // incomplete
             'Quit' // complete
         ]
     }
 ];
 
-function nextAction() {
-    inquirer.prompt(actionQuestion).then((response) => {
-        switch (response.action) {
-            case 'View All Employees':
-                viewEmployees();
-                break;
-            case 'Add Employee':
-                addEmployee();
-                break;
-            case 'Update Employee Role':
-                updateRole();
-                break;
-            case 'View All Roles':
-                viewRoles();
-                break;
-            case 'Add Role':
-                addRole();
-                break;
-            case 'View All Departments':
-                viewDepartments();
-                break;
-            case 'Add Department':
-                addDepartment();
-                break;
-            case 'Quit':
-                process.exit();
-        }
-    });
+async function nextAction() {
+    const response = await inquirer.prompt(actionQuestion)
+    switch (response.action) {
+        case 'View All Employees':
+            viewEmployees();
+            break;
+        case 'Add Employee':
+            addEmployee();
+            break;
+        case 'Update Employee Role':
+            updateRole();
+            break;
+        case 'View All Roles':
+            viewRoles();
+            break;
+        case 'Add Role':
+            addRole();
+            break;
+        case 'View All Departments':
+            viewDepartments();
+            break;
+        case 'Add Department':
+            addDepartment();
+            break;
+        case 'Quit':
+            process.exit();
+    };
 };
 
 function viewEmployees() {
@@ -80,8 +79,53 @@ function viewEmployees() {
     });
 };
 
-function addEmployee() {
+async function addEmployee() {
+    // get the required options for the list choices
+    const roles = await db.promise().query('SELECT title FROM role');
+    const managers = await db.promise().query('SELECT CONCAT(first_name, " ", last_name) AS name FROM employee');
+    const options = [roles[0].map(role => role.title), managers[0].map(employee => employee.name)];
+    options[1].push('None');
 
+    // make the list of questions to ask
+    const employeeQuestions = [
+        {
+            type: 'input',
+            message: "What is the employee's first name?",
+            name: 'first'
+        },
+        {
+            type: 'input',
+            message: "What is the employee's last name?",
+            name: 'last'
+        },
+        {
+            type: 'list',
+            message: "What is the employee's role?",
+            name: 'role',
+            choices: options[0]
+        },
+        {
+            type: 'list',
+            message: "Who is the employee's manager?",
+            name: 'manager',
+            choices: options[1]
+        }
+    ]
+    const response = await inquirer.prompt(employeeQuestions);
+    // nextAction();
+    // convert the role into the role ID
+    const roleId = await db.promise().query('SELECT id FROM role WHERE title = ?', response.role);
+    // convert the manager's name into their ID number
+    const name = response.manager.split(' ');
+    const managerId = await db.promise().query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', name);
+    // insert the new employee into the database
+    const values = [response.first, response.last, roleId[0][0].id, managerId[0][0].id];
+    console.log(values);
+    const insert = 
+    'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)';
+    db.query(insert, values);
+    // prompt the user for the next set of inputs
+    nextAction();
 };
 
 function updateRole() {
@@ -104,8 +148,15 @@ function addRole() {
 
 };
 
-function viewDepartments() {
+async function getRoles() {
+};
 
+function viewDepartments() {
+    db.query('SELECT * FROM department', function(err, results) {
+        console.log();
+        console.table(results);
+        nextAction();
+    });
 };
 
 function addDepartment() {
